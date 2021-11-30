@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>kakaosearch</title>
+    <link rel="stylesheet" href="/kako_search/css/reset.css" />
+    <link rel="stylesheet" href="/kako_search/css/layout.css" />
+    <link rel="stylesheet" href="/kako_search/css/fancybox.css" />
+    <script src="/kako_search/js/axios.min.js"></script>
+    <script src="/kako_search/js/fancybox.umd.js"></script>
+    <script src="/kako_search/js/gsap/gsap.min.js"></script>
+  </head>
+  <body>
+    <div id="wrap">
+      <h1>
+        <span class="title">KAKAO <strong>IMG SEARCH</strong></span>
+      </h1>
+      <div id="writtenWord">
+        <ul></ul>
+      </div>
+      <div id="thumbnails">
+        <ul></ul>
+      </div>
+      <div class="inputBox">
+        <input type="text" id="word" />
+      </div>
+    </div>
+  </body>
+  <script>
+    const thumbnailList = document.querySelector("#thumbnails ul");
+    const word = document.querySelector("#word");
+    const writtenWord = document.querySelector("#writtenWord ul");
+    let writtenWordArray = [];
+    let writtenOutput = "";
+    console.log(JSON.parse(localStorage.getItem("recentSearchWord"))); //배열로
+    console.log(localStorage.getItem("recentSearchWord")); //배열처럼생긴 하나의 문장으로
+    if (JSON.parse(localStorage.getItem("recentSearchWord")) !== null) {
+      writtenWordArray = JSON.parse(localStorage.getItem("recentSearchWord"));
+      writtenWordArray.forEach((item, index) => {
+        writtenOutput += `<li>${item}</li>`;
+      });
+    }
+    word.addEventListener("keyup", (e) => {
+      if (e.keyCode === 13 || e.key === "Enter") {
+        axios
+          .get(`https://dapi.kakao.com/v2/search/image?query=${word.value}&size=40`, {
+            headers: {
+              Authorization: "KakaoAK 4a7f0666581a6046de244a892ded90e5",
+            },
+          })
+          .then(function (res) {
+            console.log(res);
+            console.log(res.data);
+            const documents = res.data.documents;
+            let output = "";
+            documents.forEach(function (item, index) {
+              output += `<li><a href="${item.image_url}" data-fancybox="gallery"
+                data-caption="${item.title}"><img src="${item.thumbnail_url}"></a></li>`;
+            });
+            thumbnailList.innerHTML = output;
+            gsap.from("#thumbnails li", { scale: 0, duration: 0.5, stagger: 0.02 });
+
+            if (!writtenWordArray.includes(word.value)) {
+              writtenWordArray.push(word.value);
+              console.log(writtenWordArray);
+              localStorage.setItem("recentSearchWord", JSON.stringify(writtenWordArray));
+              writtenOutput = "";
+              writtenWordArray.forEach((item, index) => {
+                writtenOutput += `<li>${item}</li>`;
+              });
+              console.log(writtenOutput);
+              writtenWord.innerHTML = writtenOutput;
+            }
+
+            Fancybox.bind("[data.fancybox]", {});
+          });
+      }
+    });
+    // writtenWord.addEventListener("click", (e) => {
+    //   //   console.log(writtenWord.innerHTML);
+    //   console.log(e.target.textContent);
+    //   axios
+    //       .get(`https://dapi.kakao.com/v2/search/vclip?query=${e.target.textContent}&size=20`, {
+    //         headers: {
+    //           Authorization: "KakaoAK 4a7f0666581a6046de244a892ded90e5",
+    //         },
+    //       })
+    //       .then(function (res) {
+    //         console.log(res.data);
+    //         const documents = res.data.documents;
+    //         let output = "";
+    //         documents.forEach(function (item, index) {
+    //           output += `<li><a href="${item.url}" data-fanctbox="gallery"
+    //             data-caption="${item.title}"><img src="${item.thumbnail}"></a></li>`;
+    //         });
+    //         thumbnailList.innerHTML = output;
+    //         gsap.from("#thumbnails li", { scale: 0, duration: 0.5, stagger: 0.02 });
+
+    //         if (!writtenWordArray.includes(word.value)) {
+    //           writtenWordArray.push(word.value);
+    //           console.log(writtenWordArray);
+    //           localStorage.setItem("recentSearchWord", JSON.stringify(writtenWordArray));
+    //           writtenOutput = "";
+    //           writtenWordArray.forEach((item, index) => {
+    //             writtenOutput += `<li>${item}</li>`;
+    //           });
+    //           writtenWord.innerHTML = writtenOutput;
+    //         }
+
+    //         Fancybox.bind("[data.fancybox]", {});
+    // });
+    /*
+    아래처럼 작성하면 동적으로 추가된 것들에 적용이 안 됨.
+    const writtenWordItem = document.querySelectorAll("#writtenWord ul li");
+    console.log(writtenWordItem);
+    writtenWordItem.forEach((item, index) => {
+      item.addEventListener("click", () => {
+        console.log(item.textContent);
+      });
+    });
+    */
+  </script>
+</html>
